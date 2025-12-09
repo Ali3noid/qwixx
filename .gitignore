@@ -1,0 +1,6 @@
+/agent-os/
+/.idea/
+/backend/build/
+/backend/.gradle-cache/
+/backend/.gradle/
+/backend.iml
