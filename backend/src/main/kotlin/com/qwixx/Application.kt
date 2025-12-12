@@ -1,12 +1,15 @@
 package com.qwixx
 
+import com.qwixx.api.soloRoutes
+import com.qwixx.game.SoloGameService
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
-import io.ktor.server.application.call
+import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.routing
+import kotlinx.serialization.json.Json
 
 /**
  * Minimal Ktor bootstrap to satisfy the application entrypoint.
@@ -19,9 +22,18 @@ fun main() {
 }
 
 fun Application.module() {
+    val soloGameService = SoloGameService()
+
+    install(ContentNegotiation) {
+        json(
+            Json {
+                prettyPrint = false
+                ignoreUnknownKeys = true
+            }
+        )
+    }
+
     routing {
-        get("/health") {
-            call.respondText("ok")
-        }
+        soloRoutes(soloGameService)
     }
 }
