@@ -17,6 +17,7 @@ export const actions: Actions = {
       result = await getRoomService().createRoom(nickname);
       writeCredential(cookies, result.code, result.credential, url.protocol === 'https:');
     } catch (error) {
+      console.error('Failed to create room', error);
       return fail(400, { operation: 'create', message: message(error), nickname });
     }
     redirect(303, `/room/${result.code}`);
