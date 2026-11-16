@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { MemoryRoomRepository } from '../../src/lib/server/rooms/memory-repository.js';
 import { RoomError, RoomService } from '../../src/lib/server/rooms/service.js';
@@ -11,13 +11,16 @@ async function roomWithGuest(service: RoomService, host: string, guest: string) 
 
 describe('multiplayer rooms', () => {
   it('creates unique six-character codes and restores a participant from its credential', async () => {
-    const service = new RoomService(new MemoryRoomRepository());
+    const repository = new MemoryRoomRepository();
+    const service = new RoomService(repository);
     const first = await service.createRoom('Ada');
     const second = await service.createRoom('Bruno');
 
     expect(first.code).toMatch(/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/);
     expect(second.code).not.toBe(first.code);
+    const getSnapshot = vi.spyOn(repository, 'getSnapshot');
     const restored = await service.getView(first.code, first.credential);
+    expect(getSnapshot).toHaveBeenCalledTimes(1);
     expect(restored.participants).toEqual([
       expect.objectContaining({ id: first.credential.participantId, nickname: 'Ada', seat: 0 }),
     ]);

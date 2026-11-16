@@ -1,5 +1,4 @@
 import {
-  PUBLIC_SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY,
   SUPABASE_URL,
 } from '$app/env/private';
@@ -12,7 +11,7 @@ let service: RoomService | undefined;
 export function getRoomService(): RoomService {
   if (service) return service;
   service = new RoomService(SupabaseRoomRepository.connect(
-    SUPABASE_URL || PUBLIC_SUPABASE_URL,
+    SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY,
   ));
   return service;

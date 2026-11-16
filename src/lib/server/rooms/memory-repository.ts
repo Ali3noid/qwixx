@@ -1,7 +1,6 @@
 import type {
   NewRoom,
   ParticipantRecord,
-  PublicGameState,
   RoomRepository,
   RoomSnapshot,
   RoomStatus,
@@ -42,7 +41,6 @@ export class MemoryRoomRepository implements RoomRepository {
     roomId: string,
     hostParticipantId: string,
     state: GameState,
-    _publicState: PublicGameState,
   ): Promise<boolean> {
     const snapshot = this.rooms.get(roomId);
     if (
@@ -63,7 +61,6 @@ export class MemoryRoomRepository implements RoomRepository {
     roomId: string,
     expectedVersion: number,
     state: GameState,
-    _publicState: PublicGameState,
     status: RoomStatus,
   ): Promise<number | null> {
     const snapshot = this.rooms.get(roomId);

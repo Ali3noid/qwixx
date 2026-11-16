@@ -4,7 +4,6 @@ import type { GameState } from '../../../engine/index.js';
 import type {
   NewRoom,
   ParticipantRecord,
-  PublicGameState,
   RoomRecord,
   RoomRepository,
   RoomSnapshot,
@@ -115,13 +114,11 @@ export class SupabaseRoomRepository implements RoomRepository {
     roomId: string,
     hostParticipantId: string,
     state: GameState,
-    publicState: PublicGameState,
   ): Promise<boolean> {
     const { data, error } = await this.client.rpc('start_room_game', {
       p_room_id: roomId,
       p_host_id: hostParticipantId,
       p_state: state,
-      p_public_state: publicState,
     });
     if (error) throw error;
     return data === true;
@@ -131,14 +128,12 @@ export class SupabaseRoomRepository implements RoomRepository {
     roomId: string,
     expectedVersion: number,
     state: GameState,
-    publicState: PublicGameState,
     status: RoomStatus,
   ): Promise<number | null> {
     const { data, error } = await this.client.rpc('commit_room_game', {
       p_room_id: roomId,
       p_expected_version: expectedVersion,
       p_state: state,
-      p_public_state: publicState,
       p_status: status,
     });
     if (error) throw error;

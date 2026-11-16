@@ -2,7 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 
 import { getRoomService } from '#lib/server/rooms/runtime.js';
 import { RoomError } from '#lib/server/rooms/service.js';
-import { readCredential, realtimeConfig, writeCredential } from '#lib/server/rooms/session.js';
+import { readCredential, writeCredential } from '#lib/server/rooms/session.js';
 import type { Actions, PageServerLoad } from './$types.js';
 
 function message(error: unknown): string {
@@ -12,13 +12,13 @@ function message(error: unknown): string {
 export const load: PageServerLoad = async ({ params, cookies, url }) => {
   const code = params.code.toUpperCase();
   const credential = readCredential(cookies, code);
-  if (!credential) return { code, suggestedNickname: url.searchParams.get('nickname') ?? '', view: null, realtime: null };
+  if (!credential) return { code, suggestedNickname: url.searchParams.get('nickname') ?? '', view: null };
   try {
     const view = await getRoomService().getView(code, credential);
-    return { code, suggestedNickname: '', view, realtime: realtimeConfig(view.participantId) };
+    return { code, suggestedNickname: '', view };
   } catch (error) {
     if (error instanceof RoomError && error.code === 'UNAUTHORIZED') {
-      return { code, suggestedNickname: '', view: null, realtime: null };
+      return { code, suggestedNickname: '', view: null };
     }
     throw error;
   }

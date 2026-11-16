@@ -49,12 +49,11 @@ export interface RoomRepository {
   findRoomByCode(code: string): Promise<RoomRecord | null>;
   getSnapshot(roomId: string): Promise<RoomSnapshot | null>;
   addParticipant(participant: ParticipantRecord): Promise<'joined' | 'full' | 'started' | 'nickname_taken'>;
-  startGame(roomId: string, hostParticipantId: string, state: GameState, publicState: PublicGameState): Promise<boolean>;
+  startGame(roomId: string, hostParticipantId: string, state: GameState): Promise<boolean>;
   commitGame(
     roomId: string,
     expectedVersion: number,
     state: GameState,
-    publicState: PublicGameState,
     status: RoomStatus,
   ): Promise<number | null>;
 }
@@ -67,6 +66,7 @@ export interface ParticipantCredential {
 export interface AuthenticatedRoom {
   readonly room: RoomRecord;
   readonly participant: ParticipantRecord;
+  readonly snapshot: RoomSnapshot;
 }
 
 export interface RoomView {

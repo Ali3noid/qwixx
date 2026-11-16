@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { createClient } from '@supabase/supabase-js';
   import { invalidateAll } from '$app/navigation';
-  import { onMount } from 'svelte';
 
   import GameBoard from '#lib/components/GameBoard.svelte';
   import { getLegalActions, getScores, getWinners, type GameState, type PlayerAction } from '../../../engine/index.js';
@@ -27,27 +25,10 @@
   const currentSelection = $derived(selectedAction && legalActions.some((candidate) => playerActionId(candidate) === playerActionId(selectedAction!)) ? selectedAction : null);
   const scores = $derived(gameState ? getScores(gameState) : {});
 
-  onMount(() => {
-    if (!data.realtime || !data.view) return;
-    const client = createClient(data.realtime.url, data.realtime.anonKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-    let disposed = false;
-    let channel: ReturnType<typeof client.channel> | null = null;
-    const refresh = () => void invalidateAll();
-    void (async () => {
-      await client.realtime.setAuth(data.realtime!.accessToken);
-      if (disposed) return;
-      channel = client.channel(`room:${data.view!.roomId}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${data.view!.roomId}` }, refresh)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'room_participants', filter: `room_id=eq.${data.view!.roomId}` }, refresh)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'room_snapshots', filter: `room_id=eq.${data.view!.roomId}` }, refresh)
-        .subscribe();
-    })();
-    return () => {
-      disposed = true;
-      if (channel) void client.removeChannel(channel);
-    };
+  $effect(() => {
+    if (!data.view) return;
+    const interval = window.setInterval(() => void invalidateAll(), 2_000);
+    return () => window.clearInterval(interval);
   });
 
   async function copyLink(): Promise<void> {

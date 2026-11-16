@@ -1,10 +1,3 @@
-import { createHmac } from 'node:crypto';
-import {
-  PUBLIC_SUPABASE_ANON_KEY,
-  PUBLIC_SUPABASE_URL,
-  SUPABASE_JWT_SECRET,
-  SUPABASE_URL,
-} from '$app/env/private';
 import type { Cookies } from '@sveltejs/kit';
 
 import type { ParticipantCredential } from './types.js';
@@ -31,18 +24,4 @@ export function writeCredential(cookies: Cookies, code: string, credential: Part
     secure,
     maxAge: COOKIE_MAX_AGE,
   });
-}
-
-function base64url(value: string): string {
-  return Buffer.from(value).toString('base64url');
-}
-
-export function realtimeConfig(participantId: string): { url: string; anonKey: string; accessToken: string } | null {
-  const url = PUBLIC_SUPABASE_URL || SUPABASE_URL;
-  const now = Math.floor(Date.now() / 1000);
-  const header = base64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = base64url(JSON.stringify({ aud: 'authenticated', exp: now + 60 * 60 * 24, iat: now, role: 'authenticated', sub: participantId }));
-  const unsigned = `${header}.${payload}`;
-  const signature = createHmac('sha256', SUPABASE_JWT_SECRET).update(unsigned).digest('base64url');
-  return { url, anonKey: PUBLIC_SUPABASE_ANON_KEY, accessToken: `${unsigned}.${signature}` };
 }

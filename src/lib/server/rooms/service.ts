@@ -167,13 +167,12 @@ export class RoomService {
     if (!participant || !secretsMatch(credential.secret, participant.sessionTokenHash)) {
       throw new RoomError('UNAUTHORIZED', 'Sesja gracza jest nieprawidłowa lub wygasła.');
     }
-    return { room, participant };
+    if (!snapshot) throw new RoomError('ROOM_NOT_FOUND', 'Nie znaleziono pokoju.');
+    return { room, participant, snapshot };
   }
 
   async getView(code: string, credential: ParticipantCredential): Promise<RoomView> {
-    const { room, participant } = await this.authenticate(code, credential);
-    const snapshot = await this.repository.getSnapshot(room.id);
-    if (!snapshot) throw new RoomError('ROOM_NOT_FOUND', 'Nie znaleziono pokoju.');
+    const { room, participant, snapshot } = await this.authenticate(code, credential);
     return {
       roomId: room.id,
       code: room.code,
@@ -208,7 +207,7 @@ export class RoomService {
         .sort((left, right) => left.seat - right.seat)
         .map((entry) => entry.id);
       const state = rollIfNeeded(createGame(playerIds));
-      if (await this.repository.startGame(room.id, participant.id, state, toPublicGameState(state))) return;
+      if (await this.repository.startGame(room.id, participant.id, state)) return;
     }
     throw new RoomError('CONFLICT', 'Skład pokoju zmienia się równocześnie. Spróbuj ponownie.');
   }
@@ -225,7 +224,6 @@ export class RoomService {
         room.id,
         snapshot.game.version,
         nextState,
-        toPublicGameState(nextState),
         status,
       );
       if (version !== null) return;
