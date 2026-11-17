@@ -15,7 +15,7 @@
 - `room_participants`: nick, miejsce oraz hash sekretu sesji; maksymalnie pięć miejsc na pokój.
 - `room_games`: pełny prywatny stan silnika i monotoniczna wersja zapisu.
 
-Funkcje `create_room_with_host`, `join_room`, `start_room_game` i `commit_room_game` wykonują wielotabelowe zmiany transakcyjnie. Aplikacja łączy się z Supabase wyłącznie na serwerze SvelteKit przez `service_role`; to ciasteczko sesji uczestnika oraz `RoomService` decydują o dostępie do pokoju. RLS pozostaje dodatkową ochroną tabel, ale nie jest mechanizmem autoryzacji klienta.
+Funkcje `create_room_with_host`, `join_room`, `start_room_game` i `commit_room_game` wykonują wielotabelowe zmiany transakcyjnie. Aplikacja łączy się z Supabase wyłącznie na serwerze SvelteKit przez `service_role`; to ciasteczko sesji uczestnika oraz `RoomService` decydują o dostępie do pokoju. RLS pozostaje dodatkową ochroną tabel, ale nie jest mechanizmem autoryzacji klienta. Migracje nadają `service_role` uprawnienie `SELECT` do tabel odczytywanych przez serwer.
 
 ## Konfiguracja
 
