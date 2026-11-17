@@ -22,11 +22,18 @@ export const actions: Actions = {
     }
     redirect(303, `/room/${result.code}`);
   },
-  join: async ({ request }) => {
+  join: async ({ request, cookies, url }) => {
     const data = await request.formData();
     const code = String(data.get('code') ?? '').trim().toUpperCase();
     const nickname = String(data.get('nickname') ?? '');
     if (!code) return fail(400, { operation: 'join', message: 'Podaj kod pokoju.', nickname, code });
-    redirect(303, `/room/${encodeURIComponent(code)}?nickname=${encodeURIComponent(nickname)}`);
+    try {
+      const credential = await getRoomService().joinRoom(code, nickname);
+      writeCredential(cookies, code, credential, url.protocol === 'https:');
+    } catch (error) {
+      console.error('Failed to join room', error);
+      return fail(400, { operation: 'join', message: message(error), nickname, code });
+    }
+    redirect(303, `/room/${encodeURIComponent(code)}`);
   },
 };

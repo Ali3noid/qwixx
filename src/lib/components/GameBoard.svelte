@@ -8,10 +8,11 @@
     displayName?: string;
     legalActions: readonly PlayerAction[];
     selectedAction: PlayerAction | null;
+    pendingAction?: PlayerAction | null;
     onSelect: (action: PlayerAction) => void;
   }
 
-  let { state: gameState, playerId, displayName = playerId, legalActions, selectedAction, onSelect }: Props = $props();
+  let { state: gameState, playerId, displayName = playerId, legalActions, selectedAction, pendingAction = null, onSelect }: Props = $props();
   let choiceActions = $state<PlayerAction[]>([]);
 
   const colorClass: Record<RowColor, string> = {
@@ -55,16 +56,20 @@
 
   <div class="rows">
     {#each Object.entries(CLASSIC_ROW_VALUES) as [row, values]}
-      {@const color = row as RowColor}
-      {@const rowScore = calculateRowScore(player, color)}
+            {@const color = row as RowColor}
+            {@const rowScore = calculateRowScore(player, color)}
       <div class={`score-row ${colorClass[color]} ${gameState.lockedRows.includes(color) ? 'locked' : ''}`}>
         <span class="row-arrow" aria-hidden="true"></span>
         <div class="cells" aria-label={`${rowLabels[color]} rząd`}>
           {#each values as value, index}
             {@const choices = actionsForCell(color, value)}
-            {@const marked = player.marks[color].includes(index)}
+            {@const pending = pendingAction !== null && 'row' in pendingAction && pendingAction.row === color && actionValue(gameState, pendingAction) === value}
+            {@const marked = player.marks[color].includes(index) || pending}
+            {@const lastMarkedIndex = Math.max(player.marks[color].at(-1) ?? -1, pending ? index : -1)}
+            {@const skipped = !marked && index < lastMarkedIndex}
             <button
               class:marked
+              class:skipped
               class:legal={choices.length > 0}
               class:selected={choices.some(isSelected)}
               disabled={choices.length === 0}
@@ -120,11 +125,13 @@
   .locked { filter: saturate(.35); opacity: .78; }
   .row-arrow { align-self: center; border-bottom: .85rem solid transparent; border-left: 1.2rem solid var(--row-dark); border-top: .85rem solid transparent; height: 0; justify-self: center; width: 0; }
   .cells { display: grid; gap: .42rem; grid-template-columns: repeat(11, minmax(2.6rem, 1fr)) 2.75rem; }
-  .cells button { aspect-ratio: 1.02; background: var(--cell); border: 0; border-radius: 13px; box-shadow: 0 4px 7px #0002; color: var(--ink); font: inherit; font-size: clamp(.83rem, 1.5vw, 1.08rem); font-weight: 900; min-width: 0; padding: 0; transition: transform 120ms ease, box-shadow 120ms ease; }
+  .cells button { aspect-ratio: 1.02; background: var(--cell); border: 0; border-radius: 13px; box-shadow: 0 4px 7px #0002; color: var(--ink); font: inherit; font-size: clamp(1.05rem, 1.9vw, 1.32rem); font-weight: 900; min-width: 0; padding: 0; position: relative; transition: transform 120ms ease, box-shadow 120ms ease; }
   .cells button:disabled { cursor: default; }
   .cells button.marked { background: color-mix(in srgb, var(--cell) 55%, var(--row-dark)); color: transparent; position: relative; }
-  .cells button.marked::after { color: var(--ink); content: '×'; font-size: 1.65em; left: 50%; position: absolute; top: 46%; transform: translate(-50%, -50%); }
-  .cells button.legal { box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--row-dark); cursor: pointer; transform: translateY(-2px); }
+  .cells button.marked::after { color: var(--ink); content: '×'; font-size: 2.05em; left: 50%; position: absolute; top: 46%; transform: translate(-50%, -50%); }
+  .cells button.skipped { background: color-mix(in srgb, var(--cell) 52%, #26302c); color: color-mix(in srgb, var(--ink) 48%, #26302c); opacity: .78; }
+  .cells button.skipped::after { background: color-mix(in srgb, var(--row-dark) 78%, #101513); border-radius: 999px; content: ''; height: .22rem; left: .38rem; position: absolute; right: .38rem; top: 50%; transform: rotate(-4deg); }
+  .cells button.legal { background: color-mix(in srgb, var(--row-dark) 68%, #6b7470); box-shadow: 0 0 0 3px #101513, 0 0 0 6px #fff; color: white; cursor: pointer; outline: 2px solid var(--row-dark); outline-offset: 5px; transform: translateY(-2px); z-index: 1; }
   .cells button.selected { background: var(--row-dark); color: white; outline: 3px solid white; outline-offset: 2px; }
   .lock { align-items: center; background: color-mix(in srgb, var(--cell) 82%, white); border-radius: 50%; color: var(--ink); display: grid; place-items: center; }
   .lock svg { fill: none; height: 1.65rem; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; width: 1.65rem; }

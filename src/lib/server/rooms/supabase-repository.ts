@@ -9,6 +9,7 @@ import type {
   RoomSnapshot,
   RoomStatus,
 } from './types.js';
+import { toPublicGameState } from './service.js';
 
 interface RoomRow {
   id: string;
@@ -119,6 +120,7 @@ export class SupabaseRoomRepository implements RoomRepository {
       p_room_id: roomId,
       p_host_id: hostParticipantId,
       p_state: state,
+      p_public_state: toPublicGameState(state),
     });
     if (error) throw error;
     return data === true;
@@ -134,6 +136,7 @@ export class SupabaseRoomRepository implements RoomRepository {
       p_room_id: roomId,
       p_expected_version: expectedVersion,
       p_state: state,
+      p_public_state: toPublicGameState(state),
       p_status: status,
     });
     if (error) throw error;

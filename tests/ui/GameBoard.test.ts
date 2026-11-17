@@ -49,6 +49,43 @@ describe('GameBoard', () => {
     expect(screen.getByLabelText('Niebieski: 0 pkt')).not.toBeNull();
   });
 
+  it('visually marks earlier unmarked fields as unavailable', () => {
+    const initial = createGame(['a', 'b']);
+    const state: GameState = {
+      ...initial,
+      players: initial.players.map((player) => player.id === 'a'
+        ? { ...player, marks: { ...player.marks, red: [3] } }
+        : player),
+    };
+
+    render(GameBoard, {
+      state,
+      playerId: 'a',
+      legalActions: [],
+      selectedAction: null,
+      onSelect: vi.fn(),
+    });
+
+    expect(screen.getByRole('button', { name: 'Czerwony 2' }).classList.contains('skipped')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Czerwony 5' }).classList.contains('marked')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Czerwony 6' }).classList.contains('skipped')).toBe(false);
+  });
+
+  it('shows a submitted white-die mark before the shared phase is resolved', () => {
+    const state = applyAction(createGame(['a', 'b']), { type: 'ROLL', dice: ROLL });
+
+    render(GameBoard, {
+      state,
+      playerId: 'a',
+      legalActions: [],
+      selectedAction: null,
+      pendingAction: { type: 'MARK_WHITE', playerId: 'a', row: 'red' },
+      onSelect: vi.fn(),
+    });
+
+    expect(screen.getByRole('button', { name: 'Czerwony 2' }).classList.contains('marked')).toBe(true);
+  });
+
   it('asks which white die to use when both actions target one cell', async () => {
     let state = applyAction(createGame(['a', 'b']), { type: 'ROLL', dice: ROLL });
     state = applyAction(state, { type: 'PASS_WHITE', playerId: 'a' });

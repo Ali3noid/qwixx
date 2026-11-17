@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
+import { createGame } from '../../src/engine/index.js';
 import { MemoryRoomRepository } from '../../src/lib/server/rooms/memory-repository.js';
 import { RoomError, RoomService } from '../../src/lib/server/rooms/service.js';
+import { SupabaseRoomRepository } from '../../src/lib/server/rooms/supabase-repository.js';
 
 async function roomWithGuest(service: RoomService, host: string, guest: string) {
   const created = await service.createRoom(host);
@@ -10,6 +13,26 @@ async function roomWithGuest(service: RoomService, host: string, guest: string) 
 }
 
 describe('multiplayer rooms', () => {
+  it('sends a sanitized public state to Supabase when starting and updating a game', async () => {
+    const rpc = vi.fn()
+      .mockResolvedValueOnce({ data: true, error: null })
+      .mockResolvedValueOnce({ data: 2, error: null });
+    const repository = new SupabaseRoomRepository({ rpc } as unknown as SupabaseClient);
+    const state = createGame(['host', 'guest']);
+
+    await repository.startGame('room-id', 'host', state);
+    await repository.commitGame('room-id', 1, state, 'in_game');
+
+    expect(rpc).toHaveBeenNthCalledWith(1, 'start_room_game', expect.objectContaining({
+      p_state: state,
+      p_public_state: expect.not.objectContaining({ pendingWhiteDecisions: expect.anything() }),
+    }));
+    expect(rpc).toHaveBeenNthCalledWith(2, 'commit_room_game', expect.objectContaining({
+      p_state: state,
+      p_public_state: expect.not.objectContaining({ pendingWhiteDecisions: expect.anything() }),
+    }));
+  });
+
   it('creates unique six-character codes and restores a participant from its credential', async () => {
     const repository = new MemoryRoomRepository();
     const service = new RoomService(repository);

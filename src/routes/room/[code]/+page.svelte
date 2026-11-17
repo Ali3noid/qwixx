@@ -8,6 +8,7 @@
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
   let selectedAction = $state<PlayerAction | null>(null);
+  let submittedAction = $state<PlayerAction | null>(null);
   let feedback = $state<string | null>(null);
   let sending = $state(false);
   let copied = $state(false);
@@ -23,6 +24,11 @@
   });
   const legalActions = $derived(gameState && data.view ? getLegalActions(gameState, data.view.participantId) : []);
   const currentSelection = $derived(selectedAction && legalActions.some((candidate) => playerActionId(candidate) === playerActionId(selectedAction!)) ? selectedAction : null);
+  const pendingAction = $derived(
+    submittedAction?.type === 'MARK_WHITE' && gameState?.pendingWhiteDecisions[data.view?.participantId ?? '']
+      ? submittedAction
+      : null,
+  );
   const scores = $derived(gameState ? getScores(gameState) : {});
 
   $effect(() => {
@@ -46,6 +52,7 @@
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(clientAction),
     });
     if (!response.ok) feedback = (await response.json()).message ?? 'Nie udało się zatwierdzić ruchu.';
+    else submittedAction = action;
     selectedAction = null;
     sending = false;
     await invalidateAll();
@@ -117,7 +124,7 @@
             <span class="die white">{gameState.dice?.white1}</span><span class="die white">{gameState.dice?.white2}</span>
             {#each Object.entries(gameState.dice?.colors ?? {}) as [color, value]}<span class={`die ${color}`}>{value}</span>{/each}
           </div>
-          <GameBoard state={gameState} playerId={data.view.participantId} displayName={names[data.view.participantId]} {legalActions} {selectedAction} onSelect={(action) => selectedAction = action} />
+          <GameBoard state={gameState} playerId={data.view.participantId} displayName={names[data.view.participantId]} {legalActions} {selectedAction} {pendingAction} onSelect={(action) => selectedAction = action} />
         </section>
       {/if}
     </div>
